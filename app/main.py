@@ -1,9 +1,7 @@
 from fastapi import FastAPI
 
+from app.apps.cities.views import router as cities_router
 
-app = FastAPI(docs_url="/")
 
-
-@app.get("/hello-world/")
-async def say_hello():
-    return {"message": "Hello, world!"}
+app = FastAPI(title="KaraBUS API", docs_url="/")
+app.include_router(cities_router)
