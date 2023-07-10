@@ -1,6 +1,9 @@
 up:
 	docker compose up
 
+build:
+	docker compose up --build
+
 up-d:
 	docker compose up -d
 
@@ -18,3 +21,6 @@ test:
 
 coverage:
 	pytest -v --cov=app/
+
+chown:
+	sudo chown -R $(USER) .
