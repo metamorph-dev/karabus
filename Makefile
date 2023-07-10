@@ -4,7 +4,7 @@ up:
 build:
 	docker compose up --build
 
-up-d:
+start:
 	docker compose up -d
 
 down:

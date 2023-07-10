@@ -8,7 +8,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from dotenv import load_dotenv
 
-from app.models.base import Base
+from app.models import Base
 
 
 load_dotenv()

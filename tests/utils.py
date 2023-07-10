@@ -18,10 +18,14 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import selectinload
 
 from app.apps.busses.enums import Color
+from app.apps.orders.enums import OrderStatus
+from app.apps.orders.services.read_orders import read_orders
 from app.base.services import read_all
 from app.models import Base
 from app.models import Bus
 from app.models import City
+from app.models import Order
+from app.models import Passenger
 from app.models import Trip
 from app.models import TripStop
 
@@ -29,6 +33,24 @@ from app.models import TripStop
 T = TypeVar("T", bound=Base)
 
 get_random = partial(random.randint, a=1, b=10_000_000)
+
+
+def _create_passenger(i: int) -> Passenger:
+    return Passenger(
+        first_name=f"Passenger {i}",
+        last_name=f"Passenger {i}",
+        ticket_price=random.randint(1, 1_000),
+        age=random.randint(20, 40)
+    )
+
+
+def _create_order(i: int) -> Order:
+    return Order(
+        trip=_create_trip(i),
+        price=random.randint(1, 1_000),
+        status=OrderStatus.PENDING,
+        passengers=[_create_passenger(get_random()) for _ in range(random.randint(1, 6))]
+    )
 
 
 def _create_trip_stop(i: int) -> TripStop:
@@ -86,7 +108,7 @@ def _generate_bus_number_plate(index: int) -> str:
 def _create_bus(i: int) -> Bus:
     return Bus(
         color=random.choice(list(Color)),
-        seats_quantity=random.randint(1, 10),
+        seats_quantity=50,
         number_plate=_generate_bus_number_plate(i),
     )
 
@@ -95,16 +117,23 @@ fabrics: dict[Type[T], Callable[[int], T]] = {
     City: _create_city,
     Bus: _create_bus,
     Trip: _create_trip,
+    Order: _create_order,
+}
+
+read_items_functions: dict[Type[T], Callable[[AsyncSession, int | None, int | None], AsyncIterator[T]]] = {
+    Order: read_orders
 }
 
 
 async def create_instances(session: AsyncSession, model: Type[T], qty: int = 1) -> AsyncIterator[T]:
     create_instance = fabrics[model]
+    read_items = read_items_functions.get(model, partial(read_all, model=model))
 
     session.add_all((create_instance(get_random()) for _ in range(1, qty + 1)))
     await session.flush()
     await session.commit()
-    async for item in read_all(session, model):
+
+    async for item in read_items(session):
         yield item
 
 

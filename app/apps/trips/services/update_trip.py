@@ -5,12 +5,12 @@ from app.models import Trip
 
 
 async def update_trip(
-        session: AsyncSession,
-        trip: Trip,
-        name: str,
-        price: int,
-        bus: Bus,
-        seats_left: int,
+    session: AsyncSession,
+    trip: Trip,
+    name: str,
+    price: int,
+    bus: Bus,
+    seats_left: int,
 ) -> None:
     trip.name = name
     trip.price = price

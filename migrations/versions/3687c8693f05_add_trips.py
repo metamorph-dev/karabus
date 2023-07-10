@@ -30,6 +30,8 @@ def upgrade() -> None:
             ["busses.id"],
         ),
         sa.PrimaryKeyConstraint("id"),
+        sa.CheckConstraint(sa.text("price >= 0")),
+        sa.CheckConstraint(sa.text("seats_left >= 0")),
     )
     op.create_table(
         "trip_stops",
