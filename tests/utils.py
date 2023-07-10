@@ -1,6 +1,9 @@
 import json
 import random
 import string
+from datetime import datetime
+from datetime import timedelta
+from functools import partial
 from typing import AsyncIterator
 from typing import Callable
 from typing import Sequence
@@ -9,19 +12,60 @@ from typing import TypeVar
 
 from httpx import Response
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import selectinload
 
 from app.apps.busses.enums import Color
-from app.apps.busses.models import Bus
-from app.apps.cities.models import City
-from app.base.models import Base
 from app.base.services import read_all
+from app.models import Base
+from app.models import Bus
+from app.models import City
+from app.models import Trip
+from app.models import TripStop
 
 
 T = TypeVar("T", bound=Base)
 
+get_random = partial(random.randint, a=1, b=10_000_000)
 
-def create_city(i: int) -> City:
+
+def _create_trip_stop(i: int) -> TripStop:
+    return TripStop(
+        city=_create_city(i),
+        datetime=datetime.utcnow() + timedelta(days=random.randint(1, 14))
+    )
+
+
+def _create_trip(i: int) -> Trip:
+    bus = _create_bus(get_random())
+
+    return Trip(
+        name=f"Trip-{i}",
+        price=i * 100,
+        seats_left=bus.seats_quantity,
+        bus=bus,
+        stops=[
+            _create_trip_stop(get_random()),
+            _create_trip_stop(get_random()),
+        ],
+    )
+
+
+async def get_trip_by_id(session: AsyncSession, trip_id: int) -> Trip:
+    query = (
+        select(Trip)
+        .options(
+            joinedload(Trip.bus),
+            selectinload(Trip.stops),
+        )
+        .where(Trip.id == trip_id)
+    )
+    return await session.scalar(query)
+
+
+def _create_city(i: int) -> City:
     return City(name=f"City-{i}", longitude=i, latitude=i)
 
 
@@ -48,15 +92,16 @@ def _create_bus(i: int) -> Bus:
 
 
 fabrics: dict[Type[T], Callable[[int], T]] = {
-    City: create_city,
+    City: _create_city,
     Bus: _create_bus,
+    Trip: _create_trip,
 }
 
 
 async def create_instances(session: AsyncSession, model: Type[T], qty: int = 1) -> AsyncIterator[T]:
     create_instance = fabrics[model]
 
-    session.add_all((create_instance(i) for i in range(1, qty + 1)))
+    session.add_all((create_instance(get_random()) for _ in range(1, qty + 1)))
     await session.flush()
     await session.commit()
     async for item in read_all(session, model):

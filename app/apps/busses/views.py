@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
-from fastapi import Request
+from fastapi import status
 from fastapi.params import Path
 
 from app.apps.busses.schemas import CreateBusRequest
@@ -22,12 +22,8 @@ from app.base.exceptions import NotFoundError
 router = APIRouter(prefix="/busses", tags=["busses"])
 
 
-@router.post("/", status_code=201)
-async def create(
-        request: Request,
-        data: CreateBusRequest,
-        use_case: CreateBus = Depends(),
-) -> CreateBusResponse:
+@router.post("/", status_code=status.HTTP_201_CREATED)
+async def create(data: CreateBusRequest, use_case: CreateBus = Depends()) -> CreateBusResponse:
     try:
         result = await use_case.execute(data.color, data.seats_quantity, data.number_plate)
     except AlreadyExistError as exc:
@@ -37,11 +33,7 @@ async def create(
 
 
 @router.get("/{bus_id}")
-async def read(
-        request: Request,
-        bus_id: int = Path(...),
-        use_case: ReadBus = Depends(),
-) -> ReadBusResponse:
+async def read(bus_id: int = Path(...), use_case: ReadBus = Depends()) -> ReadBusResponse:
     try:
         result = await use_case.execute(bus_id)
     except NotFoundError:
@@ -51,19 +43,15 @@ async def read(
 
 
 @router.get("/")
-async def read_all(
-        request: Request,
-        use_case: ReadAllBusses = Depends(),
-) -> ReadAllBusResponse:
+async def read_all(use_case: ReadAllBusses = Depends()) -> ReadAllBusResponse:
     return ReadAllBusResponse(busses=[bus async for bus in use_case.execute()])
 
 
 @router.put("/{bus_id}")
 async def update(
-        request: Request,
-        data: UpdateBusRequest,
-        bus_id: int = Path(...),
-        use_case: UpdateBus = Depends(),
+    data: UpdateBusRequest,
+    bus_id: int = Path(...),
+    use_case: UpdateBus = Depends(),
 ) -> UpdateBusResponse:
     try:
         result = await use_case.execute(bus_id, data.color, data.seats_quantity, data.number_plate)
@@ -76,11 +64,7 @@ async def update(
 
 
 @router.delete("/{bus_id}", status_code=204)
-async def delete(
-        request: Request,
-        bus_id: int = Path(...),
-        use_case: DeleteBus = Depends(),
-) -> None:
+async def delete(bus_id: int = Path(...), use_case: DeleteBus = Depends()) -> None:
     try:
         await use_case.execute(bus_id)
     except NotFoundError:
