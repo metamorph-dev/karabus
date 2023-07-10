@@ -7,7 +7,6 @@ from app.apps.cities.schemas import ReadCityResponse
 from app.apps.cities.schemas import UpdateCityResponse
 from app.apps.cities.services.create_city import create_city
 from app.apps.cities.services.update_city import update_city
-from app.base.exceptions import NotFoundError
 from app.base.services import delete
 from app.base.services import read_all
 from app.base.services import read_by_id
@@ -30,8 +29,7 @@ class ReadCity:
 
     async def execute(self, city_id: int) -> ReadCityResponse:
         async with self.async_session.begin() as session:
-            if not (city := await read_by_id(session, City, city_id)):
-                raise NotFoundError()
+            city = await read_by_id(session, City, city_id)
             return ReadCityResponse.from_orm(city)
 
 
@@ -51,9 +49,7 @@ class UpdateCity:
 
     async def execute(self, city_id: int, name: str, longitude: float, latitude: float) -> UpdateCityResponse:
         async with self.async_session.begin() as session:
-            if not (city := await read_by_id(session, City, city_id)):
-                raise NotFoundError()
-
+            city = await read_by_id(session, City, city_id)
             await update_city(session, city, name, longitude, latitude)
             await session.refresh(city)
             return UpdateCityResponse.from_orm(city)

@@ -5,6 +5,7 @@ from typing import TypeVar
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.base.exceptions import NotFoundError
 from app.base.models import Base
 
 
@@ -27,7 +28,11 @@ async def read_by_id(session: AsyncSession, model: Type[T], instance_id: int) ->
         .where(model.id == instance_id)
         .order_by(model.id)
     )
-    return await session.scalar(query)
+
+    if not (result := await session.scalar(query)):
+        raise NotFoundError()
+
+    return result
 
 
 async def delete(session: AsyncSession, instance: T) -> None:

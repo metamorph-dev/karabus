@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from dotenv import load_dotenv
 
 from app.apps.cities.models import City
+from app.apps.busses.models import Bus
 from app.base.models import Base
 
 

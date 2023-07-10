@@ -20,6 +20,11 @@ from app.main import app as main_app
 from app.settings import settings
 
 
+def pytest_collection_modifyitems(items):
+    for item in items:
+        item.add_marker(pytest.mark.asyncio)
+
+
 @pytest_asyncio.fixture
 def app():
     return main_app
