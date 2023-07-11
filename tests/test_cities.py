@@ -3,92 +3,62 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.apps.cities.models import City
+from app.apps.cities.schemas import ReadCityResponse
+from app.apps.cities.schemas import UpdateCityResponse
+from app.base.exceptions import NotFoundError
 from app.base.services import read_all
 from app.base.services import read_by_id
-from tests.utils import clean_response_data
-from tests.utils import create_test_cities
+from tests.utils import clean_response
+from tests.utils import create_instances
+from tests.utils import to_json
 
 
-@pytest.mark.asyncio
 async def test_cities_read_all(ac: AsyncClient, session: AsyncSession) -> None:
-    await create_test_cities(session, 4)
+    instances_qty = 4
+    cities = [city async for city in create_instances(session, City, instances_qty)]
 
     response = await ac.get("/cities/")
 
-    assert response.status_code == 200
-    expected = [
-        {
-            "name": "City-4",
-            "longitude": 4,
-            "latitude": 4,
-        },
-        {
-            "name": "City-3",
-            "longitude": 3,
-            "latitude": 3,
-        },
-        {
-            "name": "City-2",
-            "longitude": 2,
-            "latitude": 2,
-        },
-        {
-            "name": "City-1",
-            "longitude": 1,
-            "latitude": 1,
-        },
-    ]
+    assert 200 == response.status_code
 
     response_data = response.json()["cities"]
-    assert expected == [clean_response_data(item) for item in response_data]
+
+    for i, city in enumerate(cities):
+        assert to_json(city, ReadCityResponse) == response_data[i]
 
 
-@pytest.mark.asyncio
 async def test_cities_read_by_id(ac: AsyncClient, session: AsyncSession) -> None:
-    await create_test_cities(session)
-
-    city = [city async for city in read_all(session, City)][0]
+    city = [instance async for instance in create_instances(session, City)][0]
     response = await ac.get(f"/cities/{city.id}")
 
-    assert response.status_code == 200
-
-    response_data = clean_response_data(response.json())
-    assert response_data["name"] == city.name
-    assert response_data["longitude"] == city.longitude
-    assert response_data["latitude"] == city.latitude
+    assert 200 == response.status_code
+    assert to_json(city, ReadCityResponse) == response.json()
 
 
-@pytest.mark.asyncio
 async def test_cities_create(ac: AsyncClient, session: AsyncSession) -> None:
     request_data = {"name": "City-1", "longitude": 1.0, "latitude": 1.0}
 
     response = await ac.post("/cities/", json=request_data)
 
-    assert response.status_code == 201
+    assert 201 == response.status_code
 
-    response_data = clean_response_data(response.json())
-    assert request_data == response_data
+    assert request_data == clean_response(response, "id", "created_at", "updated_at")
 
 
-@pytest.mark.asyncio
 async def test_create_city_with_already_existing_name(ac: AsyncClient, session: AsyncSession) -> None:
-    await create_test_cities(session)
-
-    city = [city async for city in read_all(session, City)][0]
-
+    city = [instance async for instance in create_instances(session, City)][0]
     request_data = {"name": city.name, "longitude": 1.0, "latitude": 1.0}
 
     response = await ac.post("/cities/", json=request_data)
 
-    assert response.status_code == 400
-    assert response.json()["detail"] == f"The city with name {request_data['name']} already exists"
+    assert 400 == response.status_code
+
+    expected = f"The city with name {city.name} already exists"
+    assert expected == response.json()["detail"]
 
 
-@pytest.mark.asyncio
 async def test_cities_update(ac: AsyncClient, session: AsyncSession) -> None:
-    await create_test_cities(session)
-    city = [city async for city in read_all(session, City)][0]
-    assert city.name == "City-1"
+    city = [instance async for instance in create_instances(session, City)][0]
 
     request_data = {
         "name": "Updated City",
@@ -98,45 +68,38 @@ async def test_cities_update(ac: AsyncClient, session: AsyncSession) -> None:
 
     response = await ac.put(f"/cities/{city.id}", json=request_data)
 
-    assert response.status_code == 200
-
-    response_data = clean_response_data(response.json())
-    assert response_data == request_data
+    assert 200 == response.status_code
 
     await session.refresh(city)
-    assert city.name == request_data["name"]
-    assert city.longitude == request_data["longitude"]
-    assert city.latitude == request_data["latitude"]
+    assert to_json(city, UpdateCityResponse) == response.json()
 
 
-@pytest.mark.asyncio
 async def test_update_city_name_to_already_existing(ac: AsyncClient, session: AsyncSession) -> None:
-    await create_test_cities(session, 2)
-    city2 = [city async for city in read_all(session, City)][0]
-    city1 = [city async for city in read_all(session, City)][1]
-    assert city1.name == "City-1"
-    assert city2.name == "City-2"
+    city_0, city_1 = [instance async for instance in create_instances(session, City, 2)][:2]
 
     request_data = {
-        "name": city1.name,
+        "name": city_1.name,
         "longitude": 30,
         "latitude": 80,
     }
 
-    response = await ac.put(f"/cities/{city2.id}", json=request_data)
+    response = await ac.put(f"/cities/{city_0.id}", json=request_data)
 
-    assert response.status_code == 400
-    assert response.json()["detail"] == f"The city with name {city1.name} already exists"
+    assert 400 == response.status_code
+
+    expected = f"The city with name {city_1.name} already exists"
+    assert expected == response.json()["detail"]
 
 
-@pytest.mark.asyncio
-async def test_notes_delete(ac: AsyncClient, session: AsyncSession) -> None:
-    await create_test_cities(session)
-
-    city = [city async for city in read_all(session, City)][0]
+async def test_cities_delete(ac: AsyncClient, session: AsyncSession) -> None:
+    city = [instance async for instance in create_instances(session, City)][0]
 
     response = await ac.delete(f"/cities/{city.id}")
 
-    assert response.status_code == 204
+    assert 204 == response.status_code
 
-    assert (await read_by_id(session, City, city.id)) is None
+    try:
+        await read_by_id(session, City, city.id)
+        assert False
+    except NotFoundError:
+        assert True

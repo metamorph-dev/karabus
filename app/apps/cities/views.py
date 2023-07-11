@@ -66,9 +66,10 @@ async def update(
     try:
         result = await use_case.execute(city_id, data.name, data.longitude, data.latitude)
     except NotFoundError:
-        raise HTTPException(404)
+        raise HTTPException(404, "Not found")
     except AlreadyExistError as exc:
         raise HTTPException(400, str(exc))
+
     return result
 
 
@@ -78,4 +79,7 @@ async def delete(
         city_id: int = Path(...),
         use_case: DeleteCity = Depends(),
 ) -> None:
-    await use_case.execute(city_id)
+    try:
+        await use_case.execute(city_id)
+    except NotFoundError:
+        pass

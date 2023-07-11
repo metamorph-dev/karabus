@@ -11,7 +11,8 @@ async def create_city(
         longitude: float,
         latitude: float,
 ) -> City:
-    session.add(city := City(name=name, longitude=longitude, latitude=latitude))
+    city = City(name=name, longitude=longitude, latitude=latitude)
+    session.add(city)
 
     try:
         await session.flush()
