@@ -1,6 +1,5 @@
 from typing import AsyncIterator
 
-from app.apps.cities.models import City
 from app.apps.cities.schemas import CitySchema
 from app.apps.cities.schemas import CreateCityResponse
 from app.apps.cities.schemas import ReadCityResponse
@@ -11,6 +10,7 @@ from app.base.services import delete
 from app.base.services import read_all
 from app.base.services import read_by_id
 from app.db import AsyncSession
+from app.models import City
 
 
 class CreateCity:
@@ -61,4 +61,5 @@ class DeleteCity:
 
     async def execute(self, city_id: int) -> None:
         async with self.async_session.begin() as session:
-            await delete(session, await read_by_id(session, City, city_id))
+            city = await read_by_id(session, City, city_id)
+            await delete(session, city)

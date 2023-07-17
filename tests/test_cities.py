@@ -1,13 +1,12 @@
-import pytest
+from fastapi import status
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.apps.cities.models import City
 from app.apps.cities.schemas import ReadCityResponse
 from app.apps.cities.schemas import UpdateCityResponse
 from app.base.exceptions import NotFoundError
-from app.base.services import read_all
 from app.base.services import read_by_id
+from app.models.cities import City
 from tests.utils import clean_response
 from tests.utils import create_instances
 from tests.utils import to_json
@@ -19,7 +18,7 @@ async def test_cities_read_all(ac: AsyncClient, session: AsyncSession) -> None:
 
     response = await ac.get("/cities/")
 
-    assert 200 == response.status_code
+    assert status.HTTP_200_OK == response.status_code
 
     response_data = response.json()["cities"]
 
@@ -31,7 +30,7 @@ async def test_cities_read_by_id(ac: AsyncClient, session: AsyncSession) -> None
     city = [instance async for instance in create_instances(session, City)][0]
     response = await ac.get(f"/cities/{city.id}")
 
-    assert 200 == response.status_code
+    assert status.HTTP_200_OK == response.status_code
     assert to_json(city, ReadCityResponse) == response.json()
 
 
@@ -40,7 +39,7 @@ async def test_cities_create(ac: AsyncClient, session: AsyncSession) -> None:
 
     response = await ac.post("/cities/", json=request_data)
 
-    assert 201 == response.status_code
+    assert status.HTTP_201_CREATED == response.status_code
 
     assert request_data == clean_response(response, "id", "created_at", "updated_at")
 
@@ -51,7 +50,7 @@ async def test_create_city_with_already_existing_name(ac: AsyncClient, session: 
 
     response = await ac.post("/cities/", json=request_data)
 
-    assert 400 == response.status_code
+    assert status.HTTP_400_BAD_REQUEST == response.status_code
 
     expected = f"The city with name {city.name} already exists"
     assert expected == response.json()["detail"]
@@ -68,7 +67,7 @@ async def test_cities_update(ac: AsyncClient, session: AsyncSession) -> None:
 
     response = await ac.put(f"/cities/{city.id}", json=request_data)
 
-    assert 200 == response.status_code
+    assert status.HTTP_200_OK == response.status_code
 
     await session.refresh(city)
     assert to_json(city, UpdateCityResponse) == response.json()
@@ -85,7 +84,7 @@ async def test_update_city_name_to_already_existing(ac: AsyncClient, session: As
 
     response = await ac.put(f"/cities/{city_0.id}", json=request_data)
 
-    assert 400 == response.status_code
+    assert status.HTTP_400_BAD_REQUEST == response.status_code
 
     expected = f"The city with name {city_1.name} already exists"
     assert expected == response.json()["detail"]
@@ -96,7 +95,7 @@ async def test_cities_delete(ac: AsyncClient, session: AsyncSession) -> None:
 
     response = await ac.delete(f"/cities/{city.id}")
 
-    assert 204 == response.status_code
+    assert status.HTTP_204_NO_CONTENT == response.status_code
 
     try:
         await read_by_id(session, City, city.id)

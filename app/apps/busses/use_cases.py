@@ -1,7 +1,6 @@
 from typing import AsyncIterator
 
 from app.apps.busses.enums import Color
-from app.apps.busses.models import Bus
 from app.apps.busses.schemas import BusSchema
 from app.apps.busses.schemas import CreateBusResponse
 from app.apps.busses.schemas import ReadBusResponse
@@ -12,6 +11,7 @@ from app.base.services import delete
 from app.base.services import read_all
 from app.base.services import read_by_id
 from app.db import AsyncSession
+from app.models import Bus
 
 
 class CreateBus:
@@ -40,8 +40,8 @@ class ReadAllBusses:
 
     async def execute(self) -> AsyncIterator[BusSchema]:
         async with self.async_session.begin() as session:
-            async for city in read_all(session, Bus):
-                yield BusSchema.from_orm(city)
+            async for bus in read_all(session, Bus):
+                yield BusSchema.from_orm(bus)
 
 
 class UpdateBus:
@@ -62,4 +62,5 @@ class DeleteBus:
 
     async def execute(self, bus_id: int) -> None:
         async with self.async_session.begin() as session:
-            await delete(session, await read_by_id(session, Bus, bus_id))
+            bus = await read_by_id(session, Bus, bus_id)
+            await delete(session, bus)

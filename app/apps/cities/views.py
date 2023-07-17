@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Path
-from fastapi import Request
+from fastapi import status
 
 from app.apps.cities.schemas import CreateCityRequest
 from app.apps.cities.schemas import CreateCityResponse
@@ -22,11 +22,10 @@ from app.base.exceptions import NotFoundError
 router = APIRouter(prefix="/cities", tags=["cities"])
 
 
-@router.post("/", status_code=201)
+@router.post("/", status_code=status.HTTP_201_CREATED)
 async def create(
-        request: Request,
-        data: CreateCityRequest,
-        use_case: CreateCity = Depends(),
+    data: CreateCityRequest,
+    use_case: CreateCity = Depends(),
 ) -> CreateCityResponse:
     try:
         result = await use_case.execute(data.name, data.longitude, data.latitude)
@@ -37,9 +36,8 @@ async def create(
 
 @router.get("/{city_id}")
 async def read(
-        request: Request,
-        city_id: int = Path(...),
-        use_case: ReadCity = Depends(),
+    city_id: int = Path(...),
+    use_case: ReadCity = Depends(),
 ) -> ReadCityResponse:
     try:
         result = await use_case.execute(city_id)
@@ -49,19 +47,15 @@ async def read(
 
 
 @router.get("/")
-async def read_all(
-        request: Request,
-        use_case: ReadAllCities = Depends(),
-) -> ReadAllCitiesResponse:
+async def read_all(use_case: ReadAllCities = Depends()) -> ReadAllCitiesResponse:
     return ReadAllCitiesResponse(cities=[city async for city in use_case.execute()])
 
 
 @router.put("/{city_id}")
 async def update(
-        request: Request,
-        data: UpdateCityRequest,
-        city_id: int = Path(...),
-        use_case: UpdateCity = Depends(),
+    data: UpdateCityRequest,
+    city_id: int = Path(...),
+    use_case: UpdateCity = Depends(),
 ) -> UpdateCityResponse:
     try:
         result = await use_case.execute(city_id, data.name, data.longitude, data.latitude)
@@ -73,12 +67,8 @@ async def update(
     return result
 
 
-@router.delete("/{city_id}", status_code=204)
-async def delete(
-        request: Request,
-        city_id: int = Path(...),
-        use_case: DeleteCity = Depends(),
-) -> None:
+@router.delete("/{city_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete(city_id: int = Path(...), use_case: DeleteCity = Depends()) -> None:
     try:
         await use_case.execute(city_id)
     except NotFoundError:
