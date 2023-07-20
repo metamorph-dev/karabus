@@ -12,6 +12,7 @@ from app.apps.orders.schemas import ReadOrderResponse
 from app.apps.orders.use_cases import ConfirmPayment
 from app.apps.orders.use_cases import CreateOrder
 from app.apps.orders.use_cases import ReadAllOrder
+from app.apps.orders.use_cases import ReadMyOrders
 from app.apps.orders.use_cases import ReadOrder
 from app.base.exceptions import NotFoundError
 
@@ -33,6 +34,11 @@ async def create(data: CreateOrderRequest, use_case: CreateOrder = Depends()) ->
 
 @router.get("/")
 async def read_all(use_case: ReadAllOrder = Depends(), offset: int = 0, limit: int = 50) -> ReadAllOrderResponse:
+    return ReadAllOrderResponse(orders=[order async for order in use_case.execute(offset, limit)])
+
+
+@router.get("/my")
+async def read_my_orders(use_case: ReadMyOrders = Depends(), offset: int = 0, limit: int = 50) -> ReadAllOrderResponse:
     return ReadAllOrderResponse(orders=[order async for order in use_case.execute(offset, limit)])
 
 
