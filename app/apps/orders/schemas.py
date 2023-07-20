@@ -70,3 +70,7 @@ class ReadAllOrderResponse(BaseModel):
 
 class ReadOrderResponse(OrderSchema):
     ...
+
+
+class ConfirmPaymentRequest(BaseModel):
+    status: OrderStatus

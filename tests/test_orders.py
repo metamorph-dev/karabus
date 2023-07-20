@@ -2,6 +2,7 @@ from fastapi import status
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.apps.orders.enums import OrderStatus
 from app.apps.orders.schemas import CreateOrderResponse
 from app.apps.orders.schemas import OrderSchema
 from app.apps.orders.schemas import ReadOrderResponse
@@ -59,3 +60,14 @@ async def test_orders_create(ac: AsyncClient, session: AsyncSession) -> None:
 
     order = await read_order_by_id(session, response_data["id"])
     assert to_json(order, CreateOrderResponse) == response_data
+
+
+async def test_confirm_payment(ac: AsyncClient, session: AsyncSession) -> None:
+    order = [order async for order in create_instances(session, Order)][0]
+    request_data = {"status": OrderStatus.PAYED}
+
+    response = await ac.post(f"/orders/{order.id}/payment", json=request_data)
+    assert status.HTTP_204_NO_CONTENT == response.status_code
+
+    await session.refresh(order)
+    assert OrderStatus.PAYED == order.status
