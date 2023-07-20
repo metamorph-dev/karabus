@@ -6,8 +6,6 @@ from app.apps.orders.enums import OrderStatus
 from app.apps.orders.exceptions import NotEnoughSeats
 from app.apps.orders.schemas import CreateOrderRequest
 from app.apps.trips.services.read_trip import read_trip
-from app.base.exceptions import NotFoundError
-from app.base.services import read_by_id
 from app.models import Order
 from app.models import Passenger
 from app.models import Trip
