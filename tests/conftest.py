@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import SessionTransaction
 
-from app.db import get_session
+from app.db.session import get_session
 from app.main import app as main_app
 from app.settings import settings
 

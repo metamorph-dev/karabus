@@ -1,23 +1,22 @@
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Annotated
 
-from app.apps.busses.enums import Color
-from app.base.exceptions import AlreadyExistError
-from app.models import Bus
+from fastapi import Depends
+
+from app.apps.busses.repositories import BusRepository
+from app.apps.busses.schemas.create_bus_request import CreateBusRequest
+from app.apps.busses.schemas.create_bus_response import CreateBusResponse
+from app.db.session import AsyncSession
 
 
-async def create_bus(
-    session: AsyncSession,
-    color: Color,
-    seats_quantity: int,
-    number_plate: str,
-) -> Bus:
-    bus = Bus(color=color, seats_quantity=seats_quantity, number_plate=number_plate)
-    session.add(bus)
+class CreateBusLocal:
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
 
-    try:
-        await session.flush()
-    except IntegrityError as exc:
-        raise AlreadyExistError(f"The bus with number plate {number_plate} already exists") from exc
+    async def execute(self, schema: CreateBusRequest) -> CreateBusResponse:
+        async with self.session.begin() as session:
+            repository = BusRepository(session)
+            bus = await repository.create(schema)
+            return CreateBusResponse.model_validate(bus)
 
-    return bus
+
+CreateBus = Annotated[CreateBusLocal, Depends()]

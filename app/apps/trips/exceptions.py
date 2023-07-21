@@ -1,2 +1,0 @@
-class TripStopCreationError(Exception):
-    """TripStopCreationError"""

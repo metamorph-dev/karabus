@@ -1,15 +1,15 @@
 from functools import lru_cache
 
-from pydantic import BaseSettings
-from pydantic import PostgresDsn
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    DB_URL: PostgresDsn = "postgresql+psycopg://postgres:postgres@postgres:5432/postgres"
-    TEST_DB_URL: PostgresDsn = "postgresql+psycopg://postgres:postgres@localhost:5432"
+    DB_URL: str = "postgresql+psycopg://postgres:postgres@postgres:5432/postgres"
+    TEST_DB_URL: str = "postgresql+psycopg://postgres:postgres@localhost:5432"
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 
 @lru_cache

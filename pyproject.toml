@@ -7,10 +7,10 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-fastapi = {extras = ["all"], version = "^0.98.0"}
+fastapi = {extras = ["all"], version = "^0.100.0"}
 alembic = "^1.11.1"
 sqlalchemy = "^2.0.17"
-psycopg = {extras = ["binary"], version = "^3.1.9"}
+psycopg = { extras = ["binary"], version = "^3.1.9" }
 
 
 [tool.poetry.group.dev.dependencies]
@@ -31,3 +31,4 @@ target-version = ['py311']
 
 [tool.ruff]
 line-length = 120
+target-version = "py311"

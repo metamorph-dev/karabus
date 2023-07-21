@@ -4,7 +4,7 @@ from httpx import AsyncClient
 from app.apps.busses.enums import Color
 from app.apps.busses.schemas import ReadBusResponse
 from app.apps.busses.schemas import UpdateBusResponse
-from app.base.exceptions import NotFoundError
+from app.base.exceptions import NotFoundException
 from app.base.services import read_by_id
 from app.db import AsyncSession
 from app.models.busses import Bus
@@ -158,5 +158,5 @@ async def test_busses_delete(ac: AsyncClient, session: AsyncSession) -> None:
     try:
         await read_by_id(session, Bus, bus.id)
         assert False
-    except NotFoundError:
+    except NotFoundException:
         assert True

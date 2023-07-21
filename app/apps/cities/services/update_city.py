@@ -1,22 +1,24 @@
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Annotated
 
-from app.base.exceptions import AlreadyExistError
-from app.models import City
+from fastapi import Depends
+
+from app.apps.cities.repositories import CityRepository
+from app.apps.cities.schemas.udpate_city_request import UpdateCityRequest
+from app.apps.cities.schemas.update_city_response import UpdateCityResponse
+from app.db.session import AsyncSession
 
 
-async def update_city(
-    session: AsyncSession,
-    city: City,
-    name: str,
-    longitude: float,
-    latitude: float,
-) -> None:
-    city.name = name
-    city.longitude = longitude
-    city.latitude = latitude
+class UpdateCityLocal:
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
 
-    try:
-        await session.flush()
-    except IntegrityError as exc:
-        raise AlreadyExistError(f"The city with name {name} already exists") from exc
+    async def execute(self, city_id: int, schema: UpdateCityRequest) -> UpdateCityResponse:
+        async with self.session.begin() as session:
+            repository = CityRepository(session)
+            city = await repository.read(city_id)
+            await repository.update(city, schema)
+            await session.refresh(city)
+            return UpdateCityResponse.model_validate(city)
+
+
+UpdateCity = Annotated[UpdateCityLocal, Depends()]

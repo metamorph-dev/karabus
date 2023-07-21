@@ -1,7 +1,8 @@
 from enum import StrEnum
+from enum import auto
 
 
 class Color(StrEnum):
-    RED = "red"
-    GREEN = "green"
-    BLUE = "blue"
+    RED = auto()
+    GREEN = auto()
+    BLUE = auto()

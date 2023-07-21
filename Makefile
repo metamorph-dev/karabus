@@ -24,3 +24,14 @@ coverage:
 
 chown:
 	sudo chown -R $(USER) .
+
+_migration:
+	docker compose exec web alembic revision --autogenerate -m $(m)
+
+_black_migrations:
+	black migrations/versions
+
+migration: _migration chown _black_migrations
+
+migrate:
+	docker compose exec web alembic upgrade head

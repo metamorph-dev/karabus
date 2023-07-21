@@ -2,11 +2,11 @@ from fastapi import status
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.apps.cities.schemas import ReadCityResponse
-from app.apps.cities.schemas import UpdateCityResponse
-from app.base.exceptions import NotFoundError
-from app.base.services import read_by_id
-from app.models.cities import City
+from app.apps.cities.exceptions.not_found import CityNotFoundException
+from app.apps.cities.repositories import CityRepository
+from app.apps.cities.schemas.read_city_response import ReadCityResponse
+from app.apps.cities.schemas.update_city_response import UpdateCityResponse
+from app.models import City
 from tests.utils import clean_response
 from tests.utils import create_instances
 from tests.utils import to_json
@@ -34,7 +34,7 @@ async def test_cities_read_by_id(ac: AsyncClient, session: AsyncSession) -> None
     assert to_json(city, ReadCityResponse) == response.json()
 
 
-async def test_cities_create(ac: AsyncClient, session: AsyncSession) -> None:
+async def test_cities_create(ac: AsyncClient, session: AsyncSession) -> None:  # noqa
     request_data = {"name": "City-1", "longitude": 1.0, "latitude": 1.0}
 
     response = await ac.post("/cities/", json=request_data)
@@ -97,8 +97,10 @@ async def test_cities_delete(ac: AsyncClient, session: AsyncSession) -> None:
 
     assert status.HTTP_204_NO_CONTENT == response.status_code
 
+    repository = CityRepository(session)
+
     try:
-        await read_by_id(session, City, city.id)
+        await repository.read(city.id)
         assert False
-    except NotFoundError:
+    except CityNotFoundException:
         assert True

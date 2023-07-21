@@ -1,22 +1,22 @@
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Annotated
 
-from app.base.exceptions import AlreadyExistError
-from app.models import City
+from fastapi import Depends
+
+from app.apps.cities.repositories import CityRepository
+from app.apps.cities.schemas.create_city_request import CreateCityRequest
+from app.apps.cities.schemas.create_city_response import CreateCityResponse
+from app.db.session import AsyncSession
 
 
-async def create_city(
-    session: AsyncSession,
-    name: str,
-    longitude: float,
-    latitude: float,
-) -> City:
-    city = City(name=name, longitude=longitude, latitude=latitude)
-    session.add(city)
+class CreateCityLocal:
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
 
-    try:
-        await session.flush()
-    except IntegrityError as exc:
-        raise AlreadyExistError(f"The city with name {name} already exists") from exc
+    async def execute(self, schema: CreateCityRequest) -> CreateCityResponse:
+        async with self.session.begin() as session:
+            repository = CityRepository(session)
+            city = await repository.create(schema)
+            return CreateCityResponse.model_validate(city)
 
-    return city
+
+CreateCity = Annotated[CreateCityLocal, Depends()]
