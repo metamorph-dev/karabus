@@ -7,11 +7,7 @@ from app.models import Order
 
 
 async def read_order_by_id(session: AsyncSession, order_id: int) -> Order:
-    query = (
-        select(Order)
-        .options(joinedload(Order.passengers))
-        .where(Order.id == order_id)
-    )
+    query = select(Order).options(joinedload(Order.passengers)).where(Order.id == order_id)
     order = await session.scalar(query)
 
     if not order:

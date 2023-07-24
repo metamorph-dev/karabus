@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from typing import TYPE_CHECKING
 
 from sqlalchemy import CheckConstraint
@@ -16,6 +17,7 @@ from app.models.base import Base
 if TYPE_CHECKING:
     from app.models.trips import Trip
     from app.models.passengers import Passenger
+    from app.models.users import User
 
 
 class Order(Base):
@@ -33,3 +35,6 @@ class Order(Base):
     trip: Mapped["Trip"] = relationship(back_populates="orders")
 
     passengers: Mapped[list["Passenger"]] = relationship(back_populates="order", cascade="all, delete-orphan")
+
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    user: Mapped[Optional["User"]] = relationship(back_populates="orders")

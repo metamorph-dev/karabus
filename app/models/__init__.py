@@ -5,6 +5,7 @@ from app.models.orders import Order
 from app.models.passengers import Passenger
 from app.models.trip_stop import TripStop
 from app.models.trips import Trip
+from app.models.users import User
 
 
 __all__ = [
@@ -15,4 +16,5 @@ __all__ = [
     "Passenger",
     "TripStop",
     "Trip",
+    "User",
 ]

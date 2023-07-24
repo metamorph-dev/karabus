@@ -9,9 +9,10 @@ from app.apps.trips.services.read_trip import read_trip
 from app.models import Order
 from app.models import Passenger
 from app.models import Trip
+from app.models import User
 
 
-async def create_order(session: AsyncSession, data: CreateOrderRequest) -> Order:
+async def create_order(session: AsyncSession, data: CreateOrderRequest, user: User | None = None) -> Order:
     trip = await read_trip(session, data.trip_id)
 
     passengers_count = len(data.passengers)
@@ -24,6 +25,7 @@ async def create_order(session: AsyncSession, data: CreateOrderRequest) -> Order
 
     order = Order(
         trip=trip,
+        user=user,
         price=data.price,
         status=OrderStatus.PENDING,
         passengers=[
