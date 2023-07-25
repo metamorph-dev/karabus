@@ -1,4 +1,4 @@
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from app.apps.cities.schemas import CitySchema
 from app.apps.cities.schemas import CreateCityResponse

@@ -1,4 +1,4 @@
-class APIException(Exception):
+class APIError(Exception):
     default_message: str | None = None
 
     def __init__(self, message: str | None = None):

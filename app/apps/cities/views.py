@@ -1,3 +1,5 @@
+import contextlib
+
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
@@ -69,7 +71,5 @@ async def update(
 
 @router.delete("/{city_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete(city_id: int = Path(...), use_case: DeleteCity = Depends()) -> None:
-    try:
+    with contextlib.suppress(NotFoundError):
         await use_case.execute(city_id)
-    except NotFoundError:
-        pass

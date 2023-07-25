@@ -1,6 +1,6 @@
 import logging
 from typing import Annotated
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from fastapi import Depends
 from sqlalchemy.exc import SQLAlchemyError
@@ -19,8 +19,8 @@ AsyncSessionLocal = async_sessionmaker(async_engine, autoflush=False)
 async def get_session() -> AsyncIterator[async_sessionmaker]:
     try:
         yield AsyncSessionLocal
-    except SQLAlchemyError as exc:
-        logger.exception(exc)
+    except SQLAlchemyError:
+        logger.exception("SQLAlchemyError")
 
 
 AsyncSession = Annotated[async_sessionmaker, Depends(get_session)]

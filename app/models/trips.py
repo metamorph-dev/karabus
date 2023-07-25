@@ -33,10 +33,10 @@ class Trip(Base):
     bus: Mapped["Bus"] = relationship(back_populates="trips")
 
     cities: Mapped[list["City"]] = relationship(
-        secondary="trip_stops", back_populates="trips", overlaps="trip, city, stops"
+        secondary="trip_stops", back_populates="trips", overlaps="trip, city, stops",
     )
     stops: Mapped[list["TripStop"]] = relationship(
-        back_populates="trip", order_by="TripStop.datetime", cascade="all, delete-orphan", overlaps="trips, cities"
+        back_populates="trip", order_by="TripStop.datetime", cascade="all, delete-orphan", overlaps="trips, cities",
     )
 
     orders: Mapped[list["Order"]] = relationship(back_populates="trip", cascade="all, delete-orphan")

@@ -6,7 +6,7 @@ from jose import jwt
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.apps.users.exceptions import CredentialException
+from app.apps.users.exceptions import CredentialError
 from app.apps.users.schemas import Claims
 from app.apps.users.schemas import PayloadData
 from app.apps.users.services.get_user import get_user
@@ -20,16 +20,16 @@ async def get_current_user(session: AsyncSession, token: HTTPAuthorizationCreden
 
     try:
         payload = PayloadData(
-            **jwt.decode(token.credentials, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_HASHING_ALGORITHM])
+            **jwt.decode(token.credentials, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_HASHING_ALGORITHM]),
         )
     except (JWTError, ValidationError) as exc:
-        raise CredentialException from exc
+        raise CredentialError from exc
 
     claims = Claims(username=payload.sub)
 
     user = await get_user(session, claims.username)
     if not user:
-        raise CredentialException
+        raise CredentialError
 
     if not user.active:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Inactive user")

@@ -1,4 +1,4 @@
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from fastapi import HTTPException
 from fastapi import status
@@ -78,8 +78,6 @@ class ReadMyOrders:
     async def execute(self, offset: int = 0, limit: int = 50) -> AsyncIterator[OrderSchema]:
         async with self.async_session.begin() as session:
             session: AsyncSession
-
-            print(f"{self.token = }", flush=True)
 
             user = await get_current_user(session, self.token)
             if user is None:

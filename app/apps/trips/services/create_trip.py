@@ -1,4 +1,3 @@
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.apps.trips.schemas import CreateTripRequest
@@ -16,10 +15,5 @@ async def create_trip(session: AsyncSession, bus: Bus, data: CreateTripRequest) 
         stops=[TripStop(city_id=stop.city_id, datetime=stop.datetime) for stop in data.stops],
     )
     session.add(trip)
-
-    try:
-        await session.flush()
-    except IntegrityError:
-        pass
-
+    await session.flush()
     return trip

@@ -29,5 +29,5 @@ class City(Base):
 
     trips: Mapped[list["Trip"]] = relationship(secondary="trip_stops", back_populates="cities")
     stops: Mapped[list["TripStop"]] = relationship(
-        back_populates="city", cascade="all, delete-orphan", overlaps="trips"
+        back_populates="city", cascade="all, delete-orphan", overlaps="trips",
     )

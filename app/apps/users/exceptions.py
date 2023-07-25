@@ -1,18 +1,18 @@
 from fastapi import HTTPException
 from fastapi import status
 
-from app.base.exceptions import APIException
+from app.base.exceptions import APIError
 
 
-class WrongCredentialsException(APIException):
+class WrongCredentialsError(APIError):
     default_message = "Wrong credentials"
 
 
-class InactiveUserException(APIException):
+class InactiveUserError(APIError):
     default_message = "Inactive user"
 
 
-class CredentialException(HTTPException):
+class CredentialError(HTTPException):
     def __init__(self) -> None:
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,

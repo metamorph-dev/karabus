@@ -1,4 +1,4 @@
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from app.apps.busses.enums import Color
 from app.apps.busses.schemas import BusSchema
