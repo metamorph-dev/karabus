@@ -1,6 +1,8 @@
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.apps.trips.schemas import CreateTripRequest
+from app.base.exceptions import NotFoundError
 from app.models import Bus
 from app.models import Trip
 from app.models import TripStop
@@ -15,5 +17,10 @@ async def create_trip(session: AsyncSession, bus: Bus, data: CreateTripRequest) 
         stops=[TripStop(city_id=stop.city_id, datetime=stop.datetime) for stop in data.stops],
     )
     session.add(trip)
-    await session.flush()
+
+    try:
+        await session.flush()
+    except IntegrityError as exc:
+        raise NotFoundError("There is no cities with such id(s)") from exc
+
     return trip

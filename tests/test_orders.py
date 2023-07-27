@@ -35,6 +35,12 @@ async def test_orders_read_by_id(ac: AsyncClient, session: AsyncSession) -> None
     assert to_json(order, ReadOrderResponse) == response.json()
 
 
+async def test_orders_read_by_id_when_order_does_not_exists(ac: AsyncClient, session: AsyncSession) -> None:
+    response = await ac.get("/orders/1")
+    assert status.HTTP_404_NOT_FOUND == response.status_code
+    assert "There is no order with id 1" == response.json()["detail"]
+
+
 async def test_orders_create(ac: AsyncClient, session: AsyncSession) -> None:
     trip = [trip async for trip in create_instances(session, Trip)][0]
 
@@ -62,6 +68,48 @@ async def test_orders_create(ac: AsyncClient, session: AsyncSession) -> None:
     assert to_json(order, CreateOrderResponse) == response_data
 
 
+async def test_create_order_when_not_enough_seats(ac: AsyncClient, session: AsyncSession) -> None:
+    trip = [trip async for trip in create_instances(session, Trip)][0]
+    await session.refresh(trip)
+
+    request_data = {
+        "trip_id": trip.id,
+        "price": 1000_00,
+        "passengers": [
+            {
+                "first_name": "Alex",
+                "last_name": "Johnson",
+                "ticket_price": 1000_00,
+                "age": 27,
+            }
+            for _ in range(trip.seats_left + 1)
+        ]
+    }
+
+    response = await ac.post("/orders/", json=request_data)
+    assert status.HTTP_409_CONFLICT == response.status_code
+    assert "Not enough seats" == response.json()["detail"]
+
+
+async def test_create_orders_when_trip_does_not_exists(ac: AsyncClient, session: AsyncSession) -> None:
+    request_data = {
+        "trip_id": 1,
+        "price": 1000_00,
+        "passengers": [
+            {
+                "first_name": "Alex",
+                "last_name": "Johnson",
+                "ticket_price": 1000_00,
+                "age": 27,
+            },
+        ]
+    }
+
+    response = await ac.post("/orders/", json=request_data)
+    assert status.HTTP_404_NOT_FOUND == response.status_code
+    assert "There is no trip with id 1" == response.json()["detail"]
+
+
 async def test_confirm_payment(ac: AsyncClient, session: AsyncSession) -> None:
     order = [order async for order in create_instances(session, Order)][0]
     request_data = {"status": OrderStatus.PAYED}
@@ -71,3 +119,11 @@ async def test_confirm_payment(ac: AsyncClient, session: AsyncSession) -> None:
 
     await session.refresh(order)
     assert OrderStatus.PAYED == order.status
+
+
+async def test_confirm_payment_when_order_does_not_exists(ac: AsyncClient, session: AsyncSession) -> None:
+    request_data = {"status": OrderStatus.PAYED}
+
+    response = await ac.post("/orders/1/payment", json=request_data)
+    assert status.HTTP_404_NOT_FOUND == response.status_code
+    assert "There is no order with id 1" == response.json()["detail"]

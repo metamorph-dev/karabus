@@ -34,11 +34,7 @@ class CreateTrip:
 
             trip = await create_trip(session, bus, data)
 
-            try:
-                result = CreateTripResponse.from_orm(trip)
-            except InvalidRequestError as exc:
-                raise NotFoundError("There is no cities with such id(s)") from exc
-
+            result = CreateTripResponse.from_orm(trip)
             return result
 
 
@@ -67,12 +63,12 @@ class UpdateTrip:
         self.async_session = session
 
     async def execute(  # noqa: PLR0913
-        self,
-        trip_id: int,
-        bus_id: int,
-        name: str,
-        price: int,
-        seats_left: int,
+            self,
+            trip_id: int,
+            bus_id: int,
+            name: str,
+            price: int,
+            seats_left: int,
     ) -> UpdateTripResponse:
         async with self.async_session.begin() as session:
             try:
