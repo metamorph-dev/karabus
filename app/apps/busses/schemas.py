@@ -13,6 +13,7 @@ class BusSchema(BaseModel):
     color: Color
     seats_quantity: int
     number_plate: str
+    photo_filename: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -26,7 +27,7 @@ class CreateBusRequest(BaseModel):
     number_plate: str = Field(min_length=8, max_length=8)
 
     @validator("number_plate")
-    def validate_number_plate(cls, value: str) -> str:
+    def validate_number_plate(cls, value: str) -> str:  # noqa: N805
         return validate_number_plate(value)
 
 

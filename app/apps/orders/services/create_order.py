@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.apps.orders.enums import OrderStatus
-from app.apps.orders.exceptions import NotEnoughSeats
+from app.apps.orders.exceptions import NotEnoughSeatsError
 from app.apps.orders.schemas import CreateOrderRequest
 from app.apps.trips.services.read_trip import read_trip
 from app.models import Order
@@ -21,7 +21,7 @@ async def create_order(session: AsyncSession, data: CreateOrderRequest, user: Us
     try:
         await session.execute(query)
     except IntegrityError as exc:
-        raise NotEnoughSeats from exc
+        raise NotEnoughSeatsError from exc
 
     order = Order(
         trip=trip,

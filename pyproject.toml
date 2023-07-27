@@ -34,3 +34,34 @@ target-version = ['py311']
 
 [tool.ruff]
 line-length = 120
+select = [
+    "F",
+    "E",
+    "W",
+    "N",
+    "Q",
+    "UP",
+    "C4",
+    "S",
+    "T20",
+    "COM",
+    "BLE",
+    "FBT",
+    "DTZ",
+    "T10",
+    "ISC",
+    "PIE",
+    "SIM",
+    "TID",
+    "TCH",
+    "ARG",
+    "PTH",
+    "ERA",
+    "PGH",
+    "PL",
+    "FLY",
+    "PERF",
+    "RUF",
+#    TODO: uncomment later
+#    "TRY",
+]

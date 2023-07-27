@@ -28,3 +28,4 @@ class Bus(Base):
     updated_at: Mapped[datetime] = mapped_column(TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     trips: Mapped[list["Trip"]] = relationship(back_populates="bus")
+    photo_filename: Mapped[str | None] = mapped_column(String(42))

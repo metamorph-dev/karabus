@@ -4,7 +4,7 @@ from app.models import Bus
 from app.models import Trip
 
 
-async def update_trip(
+async def update_trip(  # noqa: PLR0913
     session: AsyncSession,
     trip: Trip,
     name: str,

@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str = "5abac2061bf0941ac2c542172f5ce73dbb8c95756f33e21259013b49f18723ed"
     JWT_HASHING_ALGORITHM: str = "HS256"
     JWT_EXPIRE_IN_MINUTES: int = 30
+    TOKEN_TYPE: str = "bearer"
 
     class Config:
         env_file = ".env"

@@ -1,4 +1,4 @@
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from sqlalchemy.exc import InvalidRequestError
 
@@ -66,7 +66,7 @@ class UpdateTrip:
     def __init__(self, session: AsyncSession) -> None:
         self.async_session = session
 
-    async def execute(
+    async def execute(  # noqa: PLR0913
         self,
         trip_id: int,
         bus_id: int,

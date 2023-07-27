@@ -1,3 +1,5 @@
+import contextlib
+
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
@@ -57,14 +59,12 @@ async def update(
     try:
         result = await use_case.execute(trip_id, data.bus_id, data.name, data.price, data.seats_left)
     except NotFoundError as exc:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc))
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
 
     return result
 
 
 @router.delete("/{trip_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete(trip_id: int = Path(...), use_case: DeleteTrip = Depends()) -> None:
-    try:
+    with contextlib.suppress(NotFoundError):
         await use_case.execute(trip_id)
-    except NotFoundError:
-        pass

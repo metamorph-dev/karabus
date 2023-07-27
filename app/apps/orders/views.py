@@ -3,7 +3,7 @@ from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import status
 
-from app.apps.orders.exceptions import NotEnoughSeats
+from app.apps.orders.exceptions import NotEnoughSeatsError
 from app.apps.orders.schemas import ConfirmPaymentRequest
 from app.apps.orders.schemas import CreateOrderRequest
 from app.apps.orders.schemas import CreateOrderResponse
@@ -26,7 +26,7 @@ async def create(data: CreateOrderRequest, use_case: CreateOrder = Depends()) ->
         result = await use_case.execute(data)
     except NotFoundError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc))
-    except NotEnoughSeats as exc:
+    except NotEnoughSeatsError as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc))
 
     return result

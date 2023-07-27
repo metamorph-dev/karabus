@@ -1,4 +1,4 @@
-class NotEnoughSeats(Exception):
+class NotEnoughSeatsError(Exception):
     default_message = "Not enough seats"
 
     def __init__(self, message: str | None = None) -> None:

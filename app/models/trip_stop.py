@@ -1,3 +1,4 @@
+from typing import ClassVar
 from typing import TYPE_CHECKING
 from datetime import datetime
 
@@ -25,6 +26,6 @@ class TripStop(Base):
 
     datetime: Mapped[datetime]
 
-    __mapper_args__ = {
+    __mapper_args__: ClassVar[dict[str, bool]] = {
         "confirm_deleted_rows": False,
     }

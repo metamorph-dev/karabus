@@ -1,5 +1,4 @@
-from typing import AsyncIterator
-from typing import Type
+from collections.abc import AsyncIterator
 from typing import TypeVar
 
 from sqlalchemy import select
@@ -12,14 +11,14 @@ from app.models.base import Base
 T = TypeVar("T", bound=Base)
 
 
-async def read_all(session: AsyncSession, model: Type[T]) -> AsyncIterator[T]:
+async def read_all(session: AsyncSession, model: type[T]) -> AsyncIterator[T]:
     query = select(model).order_by(model.id.desc())
     stream = await session.stream_scalars(query)
     async for row in stream:
         yield row
 
 
-async def read_by_id(session: AsyncSession, model: Type[T], instance_id: int) -> T | None:
+async def read_by_id(session: AsyncSession, model: type[T], instance_id: int) -> T | None:
     query = select(model).where(model.id == instance_id)
 
     result = await session.scalar(query)

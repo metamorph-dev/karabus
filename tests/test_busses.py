@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from fastapi import status
 from httpx import AsyncClient
 
@@ -41,7 +43,7 @@ async def test_busses_create(ac: AsyncClient, session: AsyncSession) -> None:
     response = await ac.post("/busses/", json=request_data)
 
     assert status.HTTP_201_CREATED == response.status_code
-    assert request_data == clean_response(response, "id", "created_at", "updated_at")
+    assert request_data == clean_response(response, "id", "created_at", "updated_at", "photo_filename")
 
 
 async def test_create_bus_with_invalid_number_plate_4_digits_in_the_middle(
@@ -160,3 +162,30 @@ async def test_busses_delete(ac: AsyncClient, session: AsyncSession) -> None:
         assert False
     except NotFoundError:
         assert True
+
+
+async def test_upload_bus_photo(ac: AsyncClient, session: AsyncSession) -> None:
+    bus = [instance async for instance in create_instances(session, Bus)][0]
+
+    filename = Path("tests/resources/bus.png")
+    with open(filename, "rb") as file:
+        response = await ac.put(f"/busses/{bus.id}/photo", files={"file": (filename.name, file)})
+
+    assert status.HTTP_200_OK == response.status_code
+
+    response_data = response.json()
+    photo_filename = response_data.get("photo_filename")
+    assert photo_filename is not None
+
+    photo_path = Path("static") / photo_filename
+    assert photo_path.exists()
+
+    photo_path.unlink()
+
+
+async def test_invalid_upload_bus_photo(ac: AsyncClient, session: AsyncSession) -> None:
+    filename = Path("tests/resources/bus.png")
+    with filename.open("rb") as file:
+        response = await ac.put("/busses/1/photo", files={"file": (filename.name, file)})
+
+    assert status.HTTP_404_NOT_FOUND == response.status_code
