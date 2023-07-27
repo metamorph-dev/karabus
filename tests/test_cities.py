@@ -34,6 +34,12 @@ async def test_cities_read_by_id(ac: AsyncClient, session: AsyncSession) -> None
     assert to_json(city, ReadCityResponse) == response.json()
 
 
+async def test_cities_read_city_that_does_not_exists(ac: AsyncClient, session: AsyncSession) -> None:
+    response = await ac.get("/cities/1")
+    assert status.HTTP_404_NOT_FOUND == response.status_code
+    assert "Not found" == response.json()["detail"]
+
+
 async def test_cities_create(ac: AsyncClient, session: AsyncSession) -> None:
     request_data = {"name": "City-1", "longitude": 1.0, "latitude": 1.0}
 
@@ -71,6 +77,19 @@ async def test_cities_update(ac: AsyncClient, session: AsyncSession) -> None:
 
     await session.refresh(city)
     assert to_json(city, UpdateCityResponse) == response.json()
+
+
+async def test_update_city_that_does_not_exists(ac: AsyncClient, session: AsyncSession) -> None:
+    request_data = {
+        "name": "Updated City",
+        "longitude": 30,
+        "latitude": 80,
+    }
+
+    response = await ac.put("/cities/1", json=request_data)
+
+    assert status.HTTP_404_NOT_FOUND == response.status_code
+    assert "Not found" == response.json()["detail"]
 
 
 async def test_update_city_name_to_already_existing(ac: AsyncClient, session: AsyncSession) -> None:

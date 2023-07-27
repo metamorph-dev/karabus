@@ -40,6 +40,12 @@ async def test_trips_read_by_id(ac: AsyncClient, session: AsyncSession) -> None:
     assert to_json(trip, ReadTripResponse) == response.json()
 
 
+async def test_trips_read_by_id_when_trip_does_not_exists(ac: AsyncClient, session: AsyncSession) -> None:
+    response = await ac.get("/trips/1")
+    assert status.HTTP_404_NOT_FOUND == response.status_code
+    assert "Not Found" == response.json()["detail"]
+
+
 async def test_trips_create(ac: AsyncClient, session: AsyncSession) -> None:
     bus = [bus async for bus in create_instances(session, Bus)][0]
     city_1, city_2 = [city async for city in create_instances(session, City, 2)][:2]
@@ -73,6 +79,60 @@ async def test_trips_create(ac: AsyncClient, session: AsyncSession) -> None:
     assert to_json(trip, CreateTripResponse, exclude={"stops"}) == response_data
 
 
+async def test_trips_create_when_bus_does_not_exists(ac: AsyncClient, session: AsyncSession) -> None:
+    city_1, city_2 = [city async for city in create_instances(session, City, 2)][:2]
+
+    await session.refresh(city_1)
+    await session.refresh(city_2)
+
+    request_data = {
+        "name": "Good Trip",
+        "bus_id": 1,
+        "price": 9999,
+        "stops": [
+            {
+                "city_id": city_1.id,
+                "datetime": "2023-07-14T06:48:58.305000+00:00",
+            },
+            {
+                "city_id": city_2.id,
+                "datetime": "2023-07-14T06:48:58.305000+00:00",
+            },
+        ]
+    }
+
+    response = await ac.post("/trips/", json=request_data)
+    assert status.HTTP_404_NOT_FOUND == response.status_code
+
+    assert "There is no bus with id 1" == response.json()["detail"]
+
+
+async def test_trips_create_when_cities_does_not_exists(ac: AsyncClient, session: AsyncSession) -> None:
+    bus = [bus async for bus in create_instances(session, Bus)][0]
+
+    await session.refresh(bus)
+
+    request_data = {
+        "name": "Good Trip",
+        "bus_id": bus.id,
+        "price": 9999,
+        "stops": [
+            {
+                "city_id": 1,
+                "datetime": "2023-07-14T06:48:58.305000+00:00",
+            },
+            {
+                "city_id": 2,
+                "datetime": "2023-07-14T06:48:58.305000+00:00",
+            },
+        ]
+    }
+
+    response = await ac.post("/trips/", json=request_data)
+    assert status.HTTP_404_NOT_FOUND == response.status_code
+    assert "There is no cities with such id(s)" == response.json()["detail"]
+
+
 async def test_trips_delete(ac: AsyncClient, session: AsyncSession) -> None:
     trip = [trip async for trip in create_instances(session, Trip)][0]
 
@@ -102,3 +162,37 @@ async def test_trips_update(ac: AsyncClient, session: AsyncSession) -> None:
     await session.refresh(trip)
     trip = await get_trip_by_id(session, trip.id)
     assert to_json(trip, ReadTripResponse) == response_data
+
+
+async def test_trips_update_when_trip_does_not_exists(ac: AsyncClient, session: AsyncSession) -> None:
+    bus = [bus async for bus in create_instances(session, Bus)][0]
+
+    await session.refresh(bus)
+
+    request_data = {
+        "name": "updated good trip",
+        "price": 4000,
+        "bus_id": bus.id,
+        "seats_left": 2,
+    }
+
+    response = await ac.put("/trips/1", json=request_data)
+    assert status.HTTP_404_NOT_FOUND == response.status_code
+    assert "There is no trip with id 1" == response.json()["detail"]
+
+
+async def test_trips_update_when_bus_does_not_exists(ac: AsyncClient, session: AsyncSession) -> None:
+    trip = [trip async for trip in create_instances(session, Trip)][0]
+
+    await session.refresh(trip)
+
+    request_data = {
+        "name": "updated good trip",
+        "price": 4000,
+        "bus_id": 2,
+        "seats_left": 2,
+    }
+
+    response = await ac.put(f"/trips/{trip.id}", json=request_data)
+    assert status.HTTP_404_NOT_FOUND == response.status_code
+    assert "There is no bus with id 2" == response.json()["detail"]

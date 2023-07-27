@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.apps.users.schemas import LoginSchema
 from app.apps.users.services.get_hashed_password import get_hashed_password
+from app.apps.users.services.get_user import get_user
 from app.models import User
 
 
@@ -18,6 +19,6 @@ async def create_user(session: AsyncSession, schema: LoginSchema) -> User:
     try:
         await session.flush()
     except IntegrityError:
-        HTTPException(400, f"User with username {schema.username} already exists")
+        raise HTTPException(400, f"User with username {schema.username} already exists")
 
     return user

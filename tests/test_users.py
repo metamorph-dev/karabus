@@ -27,6 +27,20 @@ async def test_create_user(ac: AsyncClient, session: AsyncSession) -> None:
     assert expected == response_data
 
 
+async def test_create_user_when_user_already_exists(ac: AsyncClient, session: AsyncSession) -> None:
+    request_data = {
+        "username": "test_user",
+        "password": "qwe123",
+    }
+
+    response = await ac.post("/users/", json=request_data)
+    assert status.HTTP_201_CREATED == response.status_code
+
+    response = await ac.post("/users/", json=request_data)
+    assert status.HTTP_400_BAD_REQUEST == response.status_code
+    assert f"User with username {request_data['username']} already exists" == response.json()["detail"]
+
+
 async def test_login(ac: AsyncClient, session: AsyncSession) -> None:
     creds = {
         "username": "test_user",
@@ -83,3 +97,12 @@ async def test_my_orders(ac: AsyncClient, session: AsyncSession) -> None:
     order_id = response.json()["id"]
     order = await read_by_id(session, Order, order_id)
     assert user.id == order.user_id
+
+    response = await ac.get("/orders/my", headers=headers)
+    assert status.HTTP_200_OK == response.status_code
+
+
+async def test_read_my_orders_as_anonymous_user(ac: AsyncClient, session: AsyncSession) -> None:
+    response = await ac.get("/orders/my")
+    assert status.HTTP_403_FORBIDDEN == response.status_code
+    assert "Forbidden" == response.json()["detail"]

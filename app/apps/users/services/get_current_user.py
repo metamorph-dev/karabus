@@ -23,13 +23,13 @@ async def get_current_user(session: AsyncSession, token: HTTPAuthorizationCreden
             **jwt.decode(token.credentials, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_HASHING_ALGORITHM]),
         )
     except (JWTError, ValidationError) as exc:
-        raise CredentialError from exc
+        raise CredentialError() from exc
 
     claims = Claims(username=payload.sub)
 
     user = await get_user(session, claims.username)
     if not user:
-        raise CredentialError
+        raise CredentialError()
 
     if not user.active:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Inactive user")

@@ -3,6 +3,7 @@ from pathlib import Path
 from fastapi import status
 from httpx import AsyncClient
 
+from app.apps.busses.constants import MAX_FILENAME_SUFFIX_LENGTH
 from app.apps.busses.enums import Color
 from app.apps.busses.schemas import ReadBusResponse
 from app.apps.busses.schemas import UpdateBusResponse
@@ -35,6 +36,13 @@ async def test_busses_read_by_id(ac: AsyncClient, session: AsyncSession) -> None
 
     assert status.HTTP_200_OK == response.status_code
     assert to_json(bus, ReadBusResponse) == response.json()
+
+
+async def test_read_bus_that_does_not_exists(ac: AsyncClient, session: AsyncSession) -> None:
+    response = await ac.get("/busses/1")
+
+    assert status.HTTP_404_NOT_FOUND == response.status_code
+    assert "Not found" == response.json()["detail"]
 
 
 async def test_busses_create(ac: AsyncClient, session: AsyncSession) -> None:
@@ -135,6 +143,20 @@ async def test_busses_update(ac: AsyncClient, session: AsyncSession) -> None:
     assert to_json(bus, UpdateBusResponse) == response.json()
 
 
+async def test_update_bus_that_does_not_exists(ac: AsyncClient, session: AsyncSession) -> None:
+    request_data = {
+        "color": Color.RED,
+        "seats_quantity": 6,
+        "number_plate": "АХ1221HI",
+    }
+
+    response = await ac.put("/busses/1", json=request_data)
+
+    assert status.HTTP_404_NOT_FOUND == response.status_code
+
+    assert "Not found" == response.json()["detail"]
+
+
 async def test_update_city_number_plate_to_already_existing(ac: AsyncClient, session: AsyncSession) -> None:
     bus_0, bus_1 = [instance async for instance in create_instances(session, Bus, 2)][:2]
 
@@ -181,6 +203,17 @@ async def test_upload_bus_photo(ac: AsyncClient, session: AsyncSession) -> None:
     assert photo_path.exists()
 
     photo_path.unlink()
+
+
+async def test_upload_bus_photo_with_large_suffix(ac: AsyncClient, session: AsyncSession) -> None:
+    bus = [instance async for instance in create_instances(session, Bus)][0]
+
+    filename = Path("tests/resources/bus.large_suffix")
+    with open(filename, "rb") as file:
+        response = await ac.put(f"/busses/{bus.id}/photo", files={"file": (filename.name, file)})
+
+    assert status.HTTP_400_BAD_REQUEST == response.status_code
+    assert f"Filename suffix length is bigger than {MAX_FILENAME_SUFFIX_LENGTH}" == response.json()["detail"]
 
 
 async def test_invalid_upload_bus_photo(ac: AsyncClient, session: AsyncSession) -> None:
